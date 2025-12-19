@@ -1,0 +1,105 @@
+name: homelab
+
+networks:
+  lab_net:
+    external: true
+
+services:
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    networks:
+      lab_net:
+        ipv4_address: 10.10.50.30
+    env_file:
+      - ../common.env
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ./jellyfin-config:/config
+      - /warehouse:/warehouse
+      - /mnt/ramtranscode:/mnt/ramtranscode
+      - /mnt/nvme:/mnt/nvme
+    ports:
+      - "8096:8096"
+
+  jellystat:
+    image: cyfershepard/jellystat:latest
+    container_name: jellystat
+    restart: unless-stopped
+    networks:
+      lab_net:
+        ipv4_address: 10.10.50.32
+    env_file:
+      - ../common.env
+    environment:
+      - POSTGRES_USER=jellystat
+      - POSTGRES_PASSWORD=jellystatpass
+      - POSTGRES_DB=jellystat
+      - POSTGRES_HOST=jellystat-db
+    depends_on:
+      - jellystat-db
+    ports:
+      - "5056:3000"
+    volumes:
+      - ./jellystat-config:/config
+
+  jellystat-db:
+    image: postgres:16-alpine
+    container_name: jellystat-db
+    restart: unless-stopped
+    networks:
+      lab_net:
+        ipv4_address: 10.10.50.132
+    environment:
+      - POSTGRES_USER=jellystat
+      - POSTGRES_PASSWORD=jellystatpass
+      - POSTGRES_DB=jellystat
+    volumes:
+      - ./jellystat-db-data:/var/lib/postgresql/data
+
+  tdarr:
+    image: ghcr.io/haveagitgat/tdarr:latest
+    container_name: tdarr
+    restart: unless-stopped
+    networks:
+      lab_net:
+        ipv4_address: 10.10.50.33
+    env_file:
+      - ../common.env
+    environment:
+      - TZ=Europe/Copenhagen
+      - PUID=1000
+      - PGID=1000
+    ports:
+      - "8265:8265"
+      - "8266:8266"
+    volumes:
+      - ./tdarr-server:/app/server
+      - ./tdarr-config:/app/configs
+      - ./tdarr-logs:/app/logs
+      - /warehouse:/warehouse
+
+  tdarr-node:
+    image: ghcr.io/haveagitgat/tdarr_node:latest
+    container_name: tdarr-node
+    restart: unless-stopped
+    networks:
+      lab_net:
+        ipv4_address: 10.10.50.34
+    env_file:
+      - ../common.env
+    environment:
+      - TZ=Europe/Copenhagen
+      - PUID=1000
+      - PGID=1000
+      - serverIP=tdarr
+      - serverPort=8266
+      - nodeName=tdarr-node-1
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ./tdarr-node-config:/app/configs
+      - ./tdarr-node-logs:/app/logs
+      - /warehouse:/warehouse

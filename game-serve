@@ -1,0 +1,44 @@
+name: homelab
+
+networks:
+  lab_net:
+    external: true
+
+services:
+  pterodactyl:
+    image: ghcr.io/pterodactyl/panel:latest
+    container_name: pterodactyl
+    restart: unless-stopped
+    networks:
+      lab_net:
+        ipv4_address: 10.10.50.61
+    env_file:
+      - ../common.env
+    environment:
+      - APP_URL=https://pterodactyl.example.com
+    volumes:
+      - ./pterodactyl-config:/app
+      - /warehouse:/warehouse
+      - /mnt/nvme:/mnt/nvme
+    ports:
+      - "8088:80"
+
+  wings:
+    image: ghcr.io/pterodactyl/wings:latest
+    container_name: wings
+    restart: unless-stopped
+    networks:
+      lab_net:
+        ipv4_address: 10.10.50.62
+    env_file:
+      - ../common.env
+    volumes:
+      - /var/lib/pterodactyl:/var/lib/pterodactyl
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /warehouse:/warehouse
+      - /mnt/nvme:/mnt/nvme
+    ports:
+      - "2022:2022"
+      # Add specific game ports as needed:
+      # - "25565:25565/tcp"  # Minecraft
+      # - "27015:27015/udp"  # SRCDS

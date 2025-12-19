@@ -1,0 +1,172 @@
+name: homelab
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add: [NET_ADMIN]
+    networks:
+      lab_net:
+        ipv4_address: 10.10.50.14
+    env_file: [../common.env]
+    environment:
+      - VPN_SERVICE_PROVIDER=mullvad
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=qCNo7eFfxaZgw8wTtWSS5XtOzbggAjt0wuBqCZiaSlo=
+      - WIREGUARD_ADDRESSES=10.67.246.49/32
+      - WIREGUARD_DNS=10.64.0.1
+      - WIREGUARD_PUBLIC_KEY=egl+0TkpFU39F5O6r6+hIBMPQLOa8/t5CymOZV6CC3Y=
+      - WIREGUARD_ENDPOINT_IP=45.129.56.67
+      - WIREGUARD_ENDPOINT_PORT=51820
+      - TZ=Europe/Copenhagen
+      - FIREWALL_OUTBOUND_SUBNETS=192.168.0.0/24
+    ports:
+      - 8080:8080
+      - 9696:9696
+      - 7878:7878
+      - 8989:8989
+      - 6969:6969
+      - 6767:6767
+      - 8787:8787
+      - 5055:5055
+      - 8191:8191
+      - 5050:5050
+      - 64898:64898
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider https://1.1.1.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: "container:gluetun"
+    restart: unless-stopped
+    env_file: [../common.env]
+    environment:
+      - WEBUI_PORT=8080
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ./qbittorrent-config:/config
+      - /warehouse:/warehouse
+
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    network_mode: "container:gluetun"
+    restart: unless-stopped
+    env_file: [../common.env]
+    environment:
+      - PGID=1000
+      - PUID=1000
+      - TZ=Europe/Copenhagen
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ./sabnzbd-config:/config
+      - /warehouse:/warehouse
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    network_mode: "container:gluetun"
+    restart: unless-stopped
+    env_file: [../common.env]
+    depends_on:
+      gluetun:
+        condition: service_healthy
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    network_mode: "container:gluetun"
+    restart: unless-stopped
+    env_file: [../common.env]
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ./radarr-config:/config
+      - /warehouse/movies:/warehouse/movies
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    network_mode: "container:gluetun"
+    restart: unless-stopped
+    env_file: [../common.env]
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ./sonarr-config:/config
+      - /warehouse:/warehouse
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    network_mode: "container:gluetun"
+    restart: unless-stopped
+    env_file: [../common.env]
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ./prowlarr-config:/config
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    network_mode: "container:gluetun"
+    restart: unless-stopped
+    env_file: [../common.env]
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ./bazarr-config:/config
+      - /warehouse:/warehouse
+
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr:latest
+    container_name: recyclarr
+    network_mode: "container:gluetun"
+    restart: unless-stopped
+    env_file: [../common.env]
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ./recyclarr-config:/config
+      - /warehouse:/warehouse
+
+  whisparr:
+    image: hotio/whisparr:latest
+    container_name: whisparr
+    network_mode: "container:gluetun"
+    restart: unless-stopped
+    env_file: [../common.env]
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ./whisparr-config:/config
+      - /warehouse:/warehouse
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    network_mode: "container:gluetun"
+    restart: unless-stopped
+    env_file: [../common.env]
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ./jellyseerr-config:/app/config

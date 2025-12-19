@@ -1,0 +1,21 @@
+name: homelab
+
+networks:
+  lab_net:
+    external: true
+
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    networks:
+      lab_net:
+        ipv4_address: 10.10.50.50
+    env_file:
+      - ../common.env
+    ports:
+      - "8123:8123"
+    volumes:
+      - ./homeassistant-config:/config
+      - /etc/localtime:/etc/localtime:ro
