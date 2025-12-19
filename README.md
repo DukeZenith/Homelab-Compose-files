@@ -1,14 +1,13 @@
-# Homelab Overview (Ultimate README)
+# Homelab Overview 
 
 - Container subnet: `10.10.50.0/24` (`lab_net`, external Docker network)
 - Host IPs: `192.168.0.10` (LAN), `10.10.50.1/24` (gateway for lab_net)
 - Router: static route `10.10.50.0/24 via 192.168.0.10`
 - DNS chain: NPM (10.10.50.12) → AdGuard (10.10.50.13) → Internet (1.1.1.1/1.0.0.1)
 - Project name: `homelab`
-- Storage (1:1 mounts):
-  - Media root: `/warehouse` (movies, tv, music, subtitles, audiobooks)
-  - Downloads: `/mnt/nvme/downloads`
-  - Incomplete: `/mnt/nvme/incomplete`
+- Storage mounts in compose:
+  - Media/download root: `/warehouse`
+  - NVMe (general fast storage): `/mnt/nvme`
   - Transcode (RAM): `/mnt/ramtranscode`
 - GPU: Intel iGPU via `/dev/dri` (Jellyfin, Tdarr node)
 - VPN namespace: Gluetun (Mullvad WireGuard) shared by all “Arr”/download apps
@@ -63,43 +62,43 @@
 **qBittorrent**  
 - IP: shares Gluetun  
 - Port: 8080 (via Gluetun)  
-- Volumes: `./qbittorrent-config:/config`, `/mnt/nvme/downloads:/mnt/nvme/downloads`  
+- Volumes: `./qbittorrent-config:/config`, `/warehouse:/warehouse`  
 - Role: BitTorrent client.
 
 **SABnzbd**  
 - IP: shares Gluetun  
 - Port: 5050 (via Gluetun)  
-- Volumes: `./sabnzbd-config:/config`, `/mnt/nvme/downloads:/mnt/nvme/downloads`, `/mnt/nvme/incomplete:/mnt/nvme/incomplete`  
+- Volumes: `./sabnzbd-config:/config`, `/warehouse:/warehouse`  
 - Role: Usenet client.
 
 **Radarr**  
 - IP: shares Gluetun  
 - Port: 7878 (via Gluetun)  
-- Volumes: `./radarr-config:/config`, `/mnt/nvme/downloads:/mnt/nvme/downloads`, `/warehouse/movies:/warehouse/movies`  
+- Volumes: `./radarr-config:/config`, `/warehouse:/warehouse`  
 - Role: Movies automation.
 
 **Sonarr**  
 - IP: shares Gluetun  
 - Port: 8989 (via Gluetun)  
-- Volumes: `./sonarr-config:/config`, `/mnt/nvme/downloads:/mnt/nvme/downloads`, `/warehouse/tv:/warehouse/tv`  
+- Volumes: `./sonarr-config:/config`, `/warehouse:/warehouse`  
 - Role: TV automation.
 
 **Whisparr**  
 - IP: shares Gluetun  
 - Port: 6969 (via Gluetun)  
-- Volumes: `./whisparr-config:/config`, `/mnt/nvme/downloads:/mnt/nvme/downloads`, `/warehouse/audiobooks:/warehouse/audiobooks`  
+- Volumes: `./whisparr-config:/config`, `/warehouse:/warehouse`  
 - Role: Adult/audiobooks automation.
 
 **Bazarr**  
 - IP: shares Gluetun  
 - Port: 6767 (via Gluetun)  
-- Volumes: `./bazarr-config:/config`, `/warehouse/movies:/warehouse/movies`, `/warehouse/tv:/warehouse/tv`, `/warehouse/subtitles:/warehouse/subtitles`  
+- Volumes: `./bazarr-config:/config`, `/warehouse:/warehouse`  
 - Role: Subtitles.
 
 **Recyclarr**  
 - IP: shares Gluetun  
 - Port: 8787 (via Gluetun)  
-- Volumes: `./recyclarr-config:/config`  
+- Volumes: `./recyclarr-config:/config`, `/warehouse:/warehouse`  
 - Role: Sync quality profiles.
 
 **Prowlarr**  
@@ -125,7 +124,7 @@
 **Jellyfin**  
 - IP: 10.10.50.30  
 - Port: 8096 (published)  
-- Volumes: `./jellyfin-config:/config`, `/warehouse/movies:/warehouse/movies`, `/warehouse/series:/warehouse/series`, `/warehouse/music:/warehouse/music`, `/mnt/ramtranscode:/mnt/ramtranscode`  
+- Volumes: `./jellyfin-config:/config`, `/warehouse:/warehouse`, `/mnt/ramtranscode:/mnt/ramtranscode`, `/mnt/nvme:/mnt/nvme`  
 - Role: Media server  
 - Notes: VAAPI via `/dev/dri`; transcode in RAM disk.
 
@@ -152,6 +151,12 @@
 - Ports: none published  
 - Volumes: `./tdarr-node-config:/app/configs`, `./tdarr-node-logs:/app/logs`, `/warehouse:/warehouse`  
 - Role: Worker (uses `/dev/dri`).
+
+**Kometa**  
+- IP: 10.10.50.35  
+- Port: none (runs on schedule/CLI)  
+- Volumes: `./kometa-config:/config`, `/warehouse:/warehouse`  
+- Role: Library metadata/collections automation.
 
 ---
 
@@ -214,25 +219,20 @@
 **Pterodactyl Panel**  
 - IP: 10.10.50.61  
 - Port: 8088 (published)  
-- Volumes: `./pterodactyl-config:/app`  
+- Volumes: `./pterodactyl-config:/app`, `/warehouse:/warehouse`, `/mnt/nvme:/mnt/nvme`  
 - Role: Game panel.
 
 **Wings**  
 - IP: 10.10.50.62  
 - Port: 2022 (published) + add game ports as needed  
-- Volumes: `/var/lib/pterodactyl:/var/lib/pterodactyl`, `/var/run/docker.sock:/var/run/docker.sock`  
+- Volumes: `/var/lib/pterodactyl:/var/lib/pterodactyl`, `/var/run/docker.sock:/var/run/docker.sock`, `/warehouse:/warehouse`, `/mnt/nvme:/mnt/nvme`  
 - Role: Game daemon.
 
 ---
 
 ## Special Paths (1:1)
-- Downloads: `/mnt/nvme/downloads`
-- Incomplete: `/mnt/nvme/incomplete`
-- Movies: `/warehouse/movies`
-- Series: `/warehouse/series`
-- Music: `/warehouse/music`
-- Subtitles: `/warehouse/subtitles`
-- Audiobooks: `/warehouse/audiobooks`
+- General media/download root: `/warehouse`
+- Fast storage (NVMe): `/mnt/nvme`
 - Transcode: `/mnt/ramtranscode`
 - Tdarr media root: `/warehouse`
 

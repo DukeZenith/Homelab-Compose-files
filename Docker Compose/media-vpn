@@ -93,7 +93,7 @@ services:
         condition: service_healthy
     volumes:
       - ./radarr-config:/config
-      - /warehouse/movies:/warehouse/movies
+      - /warehouse:/warehouse
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest

@@ -103,3 +103,19 @@ services:
       - ./tdarr-node-config:/app/configs
       - ./tdarr-node-logs:/app/logs
       - /warehouse:/warehouse
+
+  kometa:
+    image: lscr.io/linuxserver/kometa:latest
+    container_name: kometa
+    restart: unless-stopped
+    networks:
+      lab_net:
+        ipv4_address: 10.10.50.35
+    env_file:
+      - ../common.env
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./kometa-config:/config
+      - /warehouse:/warehouse
